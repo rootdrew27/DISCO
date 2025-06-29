@@ -2,6 +2,8 @@
 
 - [ ] Authentication
     - [ ] Google
-    - [ ] Username/Password
+        - [ ] Verify Refresh Token 
+    - [ ] Twitter
+        - [ ] Refresh Token
 
-
+- [ ] Review Auth and make Documentation

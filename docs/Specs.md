@@ -3,6 +3,23 @@
 ## Overview
 A live video discussion platform that facilitates both casual conversations and formal debates, with Agentic assistance, ample opportunites for live interaction, and community engagement features.
 
+## Aesthetics
+
+- Reflective?
+- Chromatic Textures?
+
+### Light Mode
+- Light Blue (e.g. baby blue or sky blue)
+- Whites
+- Silver
+- Minimal
+
+### Dark Mode
+- Silver
+- Blacks
+- Minimal light blue
+
+
 ## Profile System
 User or Organization profile page
 
