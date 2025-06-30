@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack --hostname www.localhost.com",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --hostname www.localhost.com",
     "lint": "next lint",
     "format": "npx prettier --config .prettierrc --write ./src"
   },
@@ -15,11 +15,13 @@
     "next-auth": "^5.0.0-beta.29",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "sonner": "^2.0.5",
     "unique-names-generator": "^4.7.1",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.53.1",
     "@tailwindcss/postcss": "^4",
     "@types/mongodb": "^4.0.6",
     "@types/node": "^20",
