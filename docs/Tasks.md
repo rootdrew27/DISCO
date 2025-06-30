@@ -2,8 +2,13 @@
 
 - [ ] Authentication
     - [ ] Google
-        - [ ] Verify Refresh Token 
+        - [x] refresh token works 
     - [ ] Twitter
-        - [ ] Refresh Token
+        - [x] refresh token works
+    - [x] basic tests
+    - [ ] rigorous tests
+
+    - [ ] store refresh token (and expiration) in database.
+    - [ ] gracefully handle failed  
 
 - [ ] Review Auth and make Documentation

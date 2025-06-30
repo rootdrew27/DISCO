@@ -5,7 +5,7 @@ declare module "next-auth" {
     accessToken?: string;
     refreshToken?: string;
     accessTokenExpires?: number; // seconds
-    error: AuthError[];
+    error?: AuthError[];
     username?: string;
   }
 }
@@ -16,7 +16,7 @@ declare module "next-auth/jwt" {
     refreshToken?: string;
     accessTokenExpiresAt?: number; // seconds
     provider: ProviderName;
-    error: AuthError[];
+    error?: AuthError[];
     username?: string;
   }
 }

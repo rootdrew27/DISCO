@@ -11,8 +11,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ account, profile }) {
       try {
-        console.log("Processing sign-in callback");
-
         if (!profile || !account) {
           console.error("OAuth profile or account missing");
           return false;
@@ -47,16 +45,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async jwt({ token, account, profile }) {
       try {
-        console.log("Processing JWT callback");
-
         // Handle initial sign-in
         if (account && profile) {
-          console.log("Initial sign-in - fetching user data");
-
           const user = await getUser(profile, account.provider as ProviderName);
 
           if (!user) {
-            console.error("Failed to get user data");
+            console.error("Failed to get (or create) user");
             return {
               ...token,
               error: ["GetUserError"],
@@ -85,12 +79,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         // Return existing token if still valid
         if (!isTokenExpired(token)) {
-          console.log("Using existing valid token");
-          return token as JWT;
+          return {
+            ...token,
+            error: token.error ?? undefined, // preserve error
+          };
         }
 
         // Token expired - attempt refresh
-        console.log("Token expired - attempting refresh");
+        console.log("Refreshing token");
         return await refreshAccessToken(token);
       } catch (error) {
         console.error("JWT callback error:", error);
@@ -101,12 +97,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
     },
     async session({ session, token }) {
-      console.log("Processing session callback");
-
       if (token) {
-        session.accessToken = token.accessToken;
         session.username = token.username;
-        session.error = token.error || [];
+        session.error = token.error;
       }
 
       return session;

@@ -67,17 +67,30 @@ export async function refreshAccessToken(token: JWT): Promise<JWT> {
       throw new Error(`Unsupported provider: ${token.provider}`);
     }
 
+    // Construct Basic Auth header if required (Google does not require, Twitter does)
+    const headers: Record<string, string> = {
+      "Content-Type": "application/x-www-form-urlencoded",
+    };
+
+    // Twitter requires Basic Auth, Google does not
+    if (token.provider === "twitter") {
+      const credentials = Buffer.from(
+        `${config.clientId()}:${config.clientSecret()}`
+      ).toString("base64");
+      headers["Authorization"] = `Basic ${credentials}`;
+    }
+
+    const body = new URLSearchParams({
+      client_id: config.clientId(),
+      client_secret: config.clientSecret(),
+      refresh_token: token.refreshToken!,
+      grant_type: "refresh_token",
+    });
+
     const response = await fetch(config.url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        client_id: config.clientId(),
-        client_secret: config.clientSecret(),
-        refresh_token: token.refreshToken!,
-        grant_type: "refresh_token",
-      }),
+      headers,
+      body,
     });
 
     if (!response.ok) {
@@ -98,9 +111,11 @@ export async function refreshAccessToken(token: JWT): Promise<JWT> {
   } catch (error) {
     console.error("Error refreshing access token:", error);
 
+    // NOTE: for Google, an invalid_grant error suggests that the user needs to give consent again
+
     return {
       ...token,
-      error: [...token.error, "RefreshTokenError"],
+      error: [...(token.error || []), "RefreshTokenError"],
     };
   }
 }
@@ -115,4 +130,30 @@ export function isTokenExpired(token: JWT): boolean {
   // Add 5 minute buffer to prevent edge cases
   const bufferTime = 5 * 60;
   return Date.now() / 1000 >= token.accessTokenExpiresAt - bufferTime;
+}
+
+export async function checkAccessTokenStatus(accessToken: string) {
+  const response = await fetch(
+    `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${accessToken}`
+  );
+
+  console.log(JSON.stringify(await response.json()));
+}
+
+export async function revokeToken(token: string) {
+  try {
+    const response = await fetch("https://oauth2.googleapis.com/revoke", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        token: token,
+      }),
+    });
+
+    console.log(JSON.stringify(await response.json()));
+  } catch (error) {
+    console.log(error);
+  }
 }
