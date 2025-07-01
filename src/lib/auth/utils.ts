@@ -61,13 +61,16 @@ const TOKEN_ENDPOINTS = {
  */
 export async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
-    const config = TOKEN_ENDPOINTS[token.provider as ProviderName]; // TODO: Review why 'as ProviderName' is reqd here
+    if (!token.refreshToken) {
+      throw new Error("No refresh token available");
+    }
+
+    const config = TOKEN_ENDPOINTS[token.provider as ProviderName];
 
     if (!config) {
       throw new Error(`Unsupported provider: ${token.provider}`);
     }
 
-    // Construct Basic Auth header if required (Google does not require, Twitter does)
     const headers: Record<string, string> = {
       "Content-Type": "application/x-www-form-urlencoded",
     };
@@ -83,7 +86,7 @@ export async function refreshAccessToken(token: JWT): Promise<JWT> {
     const body = new URLSearchParams({
       client_id: config.clientId(),
       client_secret: config.clientSecret(),
-      refresh_token: token.refreshToken!,
+      refresh_token: token.refreshToken,
       grant_type: "refresh_token",
     });
 
@@ -94,24 +97,29 @@ export async function refreshAccessToken(token: JWT): Promise<JWT> {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw error;
+      const errorData = await response.text();
+      console.error(`Token refresh failed for ${token.provider}:`, errorData);
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     const refreshedTokens: RefreshTokenResponse = await response.json();
+
+    if (!refreshedTokens.access_token) {
+      throw new Error("No access token in refresh response");
+    }
 
     return {
       ...token,
       accessToken: refreshedTokens.access_token,
       accessTokenExpiresAt:
-        Math.floor(Date.now() / 1000) + refreshedTokens.expires_in,
-      refreshToken: refreshedTokens.refresh_token,
-      error: [], // Clear any previous errors on successful refresh
+        Math.floor(Date.now() / 1000) + (refreshedTokens.expires_in || 3600),
+      refreshToken: refreshedTokens.refresh_token || token.refreshToken,
+      error: [],
     };
   } catch (error) {
-    console.error("Error refreshing access token:", error);
-
-    // NOTE: for Google, an invalid_grant error suggests that the user needs to give consent again
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    console.error("Token refresh failed:", errorMessage);
 
     return {
       ...token,
@@ -132,15 +140,10 @@ export function isTokenExpired(token: JWT): boolean {
   return Date.now() / 1000 >= token.accessTokenExpiresAt - bufferTime;
 }
 
-export async function checkAccessTokenStatus(accessToken: string) {
-  const response = await fetch(
-    `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${accessToken}`
-  );
-
-  console.log(JSON.stringify(await response.json()));
-}
-
-export async function revokeToken(token: string) {
+/**
+ * Revokes a Google token
+ */
+export async function revokeToken(token: string): Promise<boolean> {
   try {
     const response = await fetch("https://oauth2.googleapis.com/revoke", {
       method: "POST",
@@ -152,8 +155,16 @@ export async function revokeToken(token: string) {
       }),
     });
 
-    console.log(JSON.stringify(await response.json()));
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Token revocation failed:", errorText);
+      return false;
+    }
+
+    console.log("Token revoked successfully");
+    return true;
   } catch (error) {
-    console.log(error);
+    console.error("Error revoking token:", error);
+    return false;
   }
 }

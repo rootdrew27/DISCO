@@ -1,5 +1,4 @@
 import { test, expect } from "@playwright/test";
-import { describe } from "node:test";
 
 test("Google Sign-In", async ({ page }) => {
   const base_url = /https:\/\/accounts\.google\.com\/v3\/signin/;
@@ -9,7 +8,10 @@ test("Google Sign-In", async ({ page }) => {
   const scope = /scope=openid\+email\+profile/;
 
   await page.goto("/");
+  await page.getByText(/sign in/i).click();
 
+  // Verify the sign-in page loads correctly
+  
   await page.getByText("Sign in with Google").click();
 
   await expect(page).toHaveURL(base_url);
@@ -26,11 +28,27 @@ test("Twitter Sign-In", async ({ page }) => {
   const response_type = /response_type%3Dcode/;
 
   await page.goto("/");
+  await page.getByText(/sign in/i).click();
 
-  await page.getByText("Sign in with X").click();
+  // Verify the sign-in page loads correctly
+  
+  await page.getByText("Sign in with Twitter").click();
 
   await expect(page).toHaveURL(base_url);
   await expect(page).toHaveURL(scope);
   await expect(page).toHaveURL(redirect_uri);
   await expect(page).toHaveURL(response_type);
+});
+
+test("Session Expired Error Display", async ({ page }) => {
+  // Navigate to sign-in page with session_expired error
+  await page.goto("/signin?error=session_expired");
+
+  // Verify the error message is displayed
+  await expect(page.locator('div.bg-red-50')).toBeVisible();
+  await expect(page.getByText('Your session has expired. Please sign in again to continue.')).toBeVisible();
+  
+  // Verify sign-in options are still available
+  await expect(page.getByText('Sign in with Google')).toBeVisible();
+  await expect(page.getByText('Sign in with Twitter')).toBeVisible();
 });

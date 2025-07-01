@@ -13,7 +13,9 @@ export function SignIn() {
         redirect(`/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
       }}
     >
-      <button type="submit">Sign in</button>
+      <button role="button" type="submit">
+        Sign in
+      </button>
     </form>
   );
 }
