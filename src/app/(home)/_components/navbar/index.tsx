@@ -1,5 +1,5 @@
-import SignIn from "./sign-in";
-import { SignOut } from "./sign-out";
+import { SignIn } from "@/components/auth/sign-in";
+import { SignOut } from "@/components/auth/sign-out";
 import { Session } from "next-auth";
 
 export default function Navbar({ session }: { session: Session | null }) {

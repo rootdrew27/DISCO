@@ -5,7 +5,7 @@ import type {
   SignInResponse,
   RefreshTokenResponse,
   User,
-} from "../../types/auth";
+} from "@/types/auth";
 
 /**
  * Fetches or creates a user via the internal API

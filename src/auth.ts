@@ -5,6 +5,16 @@ import { ProviderName } from "./types/auth";
 import { JWT } from "next-auth/jwt";
 import { GoogleProfile } from "next-auth/providers/google";
 import { TwitterProfile } from "next-auth/providers/twitter";
+import { Provider } from "next-auth/providers";
+
+export const providerMap = providers.map((provider: Provider) => {
+  if (typeof provider === "function") {
+    const providerData = provider();
+    return { id: providerData.id, name: providerData.name };
+  } else {
+    return { id: provider.id, name: provider.name };
+  }
+});
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: providers,
@@ -45,9 +55,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async jwt({ token, account, profile }) {
       try {
+        if (token.error && token.error.length > 0) {
+          console.log("JWT: Error present, returning early.");
+          return token;
+        }
         // Handle initial sign-in
         if (account && profile) {
           const user = await getUser(profile, account.provider as ProviderName);
+          console.log("JWT: Signin.");
 
           if (!user) {
             console.error("Failed to get (or create) user");
@@ -59,6 +74,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           return {
             ...token,
+            id: user._id,
             username: user.username,
             provider: account.provider as ProviderName,
             accessToken: account.access_token,
@@ -79,31 +95,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         // Return existing token if still valid
         if (!isTokenExpired(token)) {
-          return {
-            ...token,
-            error: token.error ?? undefined, // preserve error
-          };
+          return token;
         }
 
         // Token expired - attempt refresh
-        console.log("Refreshing token");
+        console.log("JWT: Refreshing token.");
         return await refreshAccessToken(token);
       } catch (error) {
         console.error("JWT callback error:", error);
         return {
           ...token,
-          error: [...(token.error || []), "JWTError"],
+          error: [...(token.error || []), (error as Error).message],
         } as JWT;
       }
     },
     async session({ session, token }) {
       if (token) {
-        session.username = token.username;
+        if (token.id) {
+          session.id = token.id;
+          session.username = token.username;
+        }
         session.error = token.error;
       }
 
       return session;
     },
+  },
+  pages: {
+    signIn: "/signin",
   },
   session: {
     strategy: "jwt",

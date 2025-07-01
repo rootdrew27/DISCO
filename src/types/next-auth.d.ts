@@ -2,6 +2,7 @@ import { AuthError, ProviderName } from "@/auth";
 
 declare module "next-auth" {
   interface Session {
+    id: string;
     accessToken?: string;
     refreshToken?: string;
     accessTokenExpires?: number; // seconds
@@ -12,6 +13,7 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT {
+    id?: string;
     accessToken?: string;
     refreshToken?: string;
     accessTokenExpiresAt?: number; // seconds
