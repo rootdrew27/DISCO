@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 const SIGNIN_ERROR_URL = "/signin/error";
 
 export default async function SignIn(props: {
-  searchParams: { callbackUrl: string | undefined; error: string | undefined };
+  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
 }) {
   const searchParams = await props.searchParams;
 
