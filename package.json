@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start --hostname www.localhost.com",
     "lint": "next lint",
-    "format": "npx prettier --config .prettierrc --write ./src"
+    "format:check": "npx prettier --config .prettierrc --check ./src",
+    "format:write": "npx prettier --config .prettierrc --write ./src",
+    "test:dev": "npm run dev & npx playwright test"
   },
   "dependencies": {
     "mongodb": "^6.17.0",
