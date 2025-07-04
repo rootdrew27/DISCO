@@ -44,9 +44,7 @@ export default async function SignIn(props: {
           }}
         >
           <div className="bg-gray-700">
-            <button type="submit">
-              <span>Sign in with {provider.name}</span>
-            </button>
+            <button type="submit">Sign in with {provider.name.trim()}</button>
           </div>
         </form>
       ))}
