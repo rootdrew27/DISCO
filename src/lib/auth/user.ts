@@ -1,34 +1,9 @@
-import { MongoClient, Db, Collection, WriteError } from "mongodb";
-
 import { ProviderProfile, User } from "@/types/auth";
 import { generateUsername } from "./utils";
+import { getUsersCollection } from "@/lib/mongodb/connect";
 import { TwitterProfile } from "next-auth/providers/twitter";
 import { GoogleProfile } from "next-auth/providers/google";
-
-let client: MongoClient;
-let db: Db;
-
-async function connectToDatabase(): Promise<Db> {
-  if (db) {
-    return db;
-  }
-
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    throw new Error("MONGODB_URI environment variable is not defined");
-  }
-
-  client = new MongoClient(uri);
-  await client.connect();
-  db = client.db(process.env.MONGODB_DB_NAME);
-
-  return db;
-}
-
-async function getUsersCollection(): Promise<Collection<User>> {
-  const database = await connectToDatabase();
-  return database.collection<User>("users");
-}
+import { WriteError } from "mongodb";
 
 export async function getUser(
   profile: ProviderProfile,
@@ -110,12 +85,5 @@ export async function createNewUser(
     const msg = "Error creating new user.";
     console.error(msg, error);
     throw new Error(msg);
-  }
-}
-
-// Graceful shutdown
-export async function closeDatabaseConnection(): Promise<void> {
-  if (client) {
-    await client.close();
   }
 }

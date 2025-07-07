@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUser, createNewUser } from "@/lib/mongodb/user";
+import { getUser, createNewUser } from "@/lib/auth/user";
 
 export const runtime = "nodejs";
 
