@@ -4,7 +4,7 @@ test("Google Sign-In", async ({ page }) => {
   const base_url = /https:\/\/accounts\.google\.com\/v3\/signin/;
   const access_type = /access_type=offline/;
   const redirect_uri =
-    /redirect_uri=http%3A%2F%2Fwww.localhost.com%3A3000%2Fapi%2Fauth%2Fcallback%2Fgoogle/;
+    /redirect_uri=http%3A%2F%2Flocalhost.com%3A3000%2Fapi%2Fauth%2Fcallback%2Fgoogle/;
   const scope = /scope=openid\+email\+profile/;
 
   await page.goto("/");
@@ -25,7 +25,7 @@ test("Twitter Sign-In", async ({ page }) => {
   // TODO: Fix issue with redirects and finish test.
   const base_url = /https:\/\/x.com\/i\/oauth2/;
   const scope = /scope=users.read\+tweet.read\+offline.access/;
-  const redirect_uri = /redirect_uri%3Dhttp%253A%252F%252Fwww.localhost.com%253A3000%252Fapi%252Fauth%252Fcallback%252Ftwitter/;
+  const redirect_uri = /redirect_uri%3Dhttp%253A%252F%252Flocalhost.com%253A3000%252Fapi%252Fauth%252Fcallback%252Ftwitter/;
   const response_type = /response_type%3Dcode/;
 
   await page.goto("/");
