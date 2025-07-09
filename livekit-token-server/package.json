@@ -1,0 +1,22 @@
+{
+  "name": "livekit-token-server",
+  "version": "1.0.0",
+  "description": "A simple express server for generating livekit tokens.",
+  "license": "ISC",
+  "author": "Andrew Root",
+  "type": "module",
+  "main": "./build/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./build/server.js --hostname localhost.com",
+    "build": "tsc -p ."
+  },
+  "dependencies": {
+    "dotenv": "^17.0.1",
+    "express": "^5.1.0",
+    "livekit-server-sdk": "^2.13.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3"
+  }
+}

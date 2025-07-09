@@ -1,5 +1,7 @@
 import { auth } from "@/auth";
 import Navbar from "./_components/navbar";
+import { JoinDisco } from "./_components/join-disco";
+import { Toaster } from "sonner";
 
 export default async function Home() {
   const session = await auth();
@@ -13,6 +15,12 @@ export default async function Home() {
           <p>Error: {session.error}</p>
         )}
       </div>
+      {session && (
+        <div>
+          <JoinDisco username={session.username} />
+        </div>
+      )}
+      <Toaster />
     </div>
   );
 }
