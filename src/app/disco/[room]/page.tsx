@@ -1,25 +1,46 @@
 import { auth } from "@/auth";
 import { Disco } from "./_components/disco";
 import { Role } from "@/types/matches";
+import { getMatchData, getRole } from "@/lib/matches/active-matches";
+import { notFound } from "next/navigation";
 
-type Params = Promise<{ matchId: string }>;
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
-
-export default async function DiscoPage(props: {
-  params: Params;
-  searchParams: SearchParams;
+export default async function DiscoPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ room: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const params = await props.params;
-  const roomName = params.matchId;
+  const { room: roomName } = await params;
 
-  const searchParams = await props.searchParams;
-  const lkToken = searchParams.lkToken as string;
-  const opponents = (searchParams.opponents as string).split(",");
+  let { lkToken, opponents } = await searchParams;
+  if (!lkToken || typeof lkToken !== "string") {
+    // TODO: get Token
+    lkToken = "";
+  }
+
+  if (!opponents) {
+    notFound();
+  }
+
+  if (typeof opponents === "string") {
+    opponents = [opponents];
+  }
+
+  const matchData = await getMatchData(roomName);
+
+  if (!matchData) {
+    notFound();
+  }
 
   const session = await auth();
-  let role;
+
+  let role: Role | null;
   if (session) {
     role = await getRole(roomName, session.username);
+    if (!role) {
+      notFound();
+    }
   } else {
     role = Role.VIEWER;
   }
@@ -29,23 +50,8 @@ export default async function DiscoPage(props: {
       session={session}
       role={role}
       lkToken={lkToken}
+      matchData={matchData}
       opponents={opponents}
     />
   );
-}
-
-async function getRole(roomName: string, username: string): Promise<Role> {
-  const searchParams = new URLSearchParams({
-    roomName: roomName,
-    username: username,
-  });
-
-  const url = new URL(
-    `/role?${searchParams}`,
-    process.env.NEXT_PUBLIC_MATCHMAKING_SERVER_URL
-  );
-
-  const res = await fetch(url);
-  const data = await res.json();
-  return data.role;
 }

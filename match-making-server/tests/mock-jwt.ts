@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 
 export interface MockUser {
@@ -22,30 +22,62 @@ export class MockJWTGenerator {
   }
 
   private generateMockUsers() {
-    const firstNames = ['Alex', 'Jordan', 'Taylor', 'Casey', 'Morgan', 'Riley', 'Sam', 'Dakota', 'Avery', 'Quinn'];
-    const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'];
-    const topics = ['Technology', 'Politics', 'Science', 'Philosophy', 'Economics', 'Environment', 'Health', 'Education'];
+    const firstNames = [
+      "Alex",
+      "Jordan",
+      "Taylor",
+      "Casey",
+      "Morgan",
+      "Riley",
+      "Sam",
+      "Dakota",
+      "Avery",
+      "Quinn",
+    ];
+    const lastNames = [
+      "Smith",
+      "Johnson",
+      "Williams",
+      "Brown",
+      "Jones",
+      "Garcia",
+      "Miller",
+      "Davis",
+      "Rodriguez",
+      "Martinez",
+    ];
+    const topics = [
+      "Technology",
+      "Politics",
+      "Science",
+      "Philosophy",
+      "Economics",
+      "Environment",
+      "Health",
+      "Education",
+    ];
 
     for (let i = 1; i <= 100; i++) {
-      const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+      const firstName =
+        firstNames[Math.floor(Math.random() * firstNames.length)];
       const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
       const username = `${firstName.toLowerCase()}${lastName.toLowerCase()}${i}`;
-      
+
       this.users.push({
         id: `user-${i}`,
         username,
         email: `${username}@example.com`,
         name: `${firstName} ${lastName}`,
         image: `https://avatar.example.com/${username}`,
-        role: 'user',
+        role: "user",
         reputation: Math.floor(Math.random() * 1000) + 100,
-        expertiseLevel: Math.floor(Math.random() * 5) + 1
+        expertiseLevel: Math.floor(Math.random() * 5) + 1,
       });
     }
   }
 
   generateToken(userId: string): string {
-    const user = this.users.find(u => u.id === userId);
+    const user = this.users.find((u) => u.id === userId);
     if (!user) {
       throw new Error(`User with ID ${userId} not found`);
     }
@@ -64,12 +96,13 @@ export class MockJWTGenerator {
   }
 
   generateRandomToken(): string {
-    const randomUser = this.users[Math.floor(Math.random() * this.users.length)];
+    const randomUser =
+      this.users[Math.floor(Math.random() * this.users.length)];
     return this.generateToken(randomUser.id);
   }
 
   getUser(userId: string): MockUser | undefined {
-    return this.users.find(u => u.id === userId);
+    return this.users.find((u) => u.id === userId);
   }
 
   getAllUsers(): MockUser[] {
@@ -86,6 +119,6 @@ export class MockJWTGenerator {
   }
 }
 
-dotenv.config({ path: ".env.local"})
+dotenv.config({ path: ".env.local" });
 
 export const mockJWTGenerator = new MockJWTGenerator(process.env.AUTH_SECRET!);

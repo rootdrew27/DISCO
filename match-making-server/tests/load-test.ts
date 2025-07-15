@@ -3,7 +3,7 @@ import { mockJWTGenerator } from "./mock-jwt.js";
 import { DiscussionFormat } from "../types/types.js";
 import dotenv from "dotenv";
 
-dotenv.config({ path: ".env.local" })
+dotenv.config({ path: ".env.local" });
 
 const URL = process.env.HOST! + ":" + process.env.PORT!;
 const MAX_CLIENTS = 1000;
@@ -26,33 +26,39 @@ const createClient = () => {
 
   // Create cookie string with the JWT (simulating next-auth session token)
   const cookieString = `authjs.session-token=${mockToken};`;
-  
+
   const socket = io(URL, {
     transports,
     extraHeaders: {
-      cookie: cookieString
-    }, withCredentials: true
+      cookie: cookieString,
+    },
+    withCredentials: true,
   });
 
   // Generate random preferences for this user
   const formats = Object.values(DiscussionFormat);
-  const topics = ["Technology", "Politics", "Science", "Philosophy", "Economics", "Environment"];
-  
+  const topics = [
+    "Technology",
+    "Politics",
+    "Science",
+    "Philosophy",
+    "Economics",
+    "Environment",
+  ];
+
   const preferences = {
     format: formats[Math.floor(Math.random() * formats.length)],
     topic: topics[Math.floor(Math.random() * topics.length)],
     maxWaitTime: Math.floor(Math.random() * 300) + 60, // 60-360 seconds
-    expertiseLevel: mockUser?.expertiseLevel || Math.floor(Math.random() * 5) + 1
+    expertiseLevel:
+      mockUser?.expertiseLevel || Math.floor(Math.random() * 5) + 1,
   };
 
   setInterval(() => {
     socket.emit("join_queue", preferences);
   }, EMIT_INTERVAL_IN_MS);
 
-  setInterval(() => {
-
-  }, EMIT_INTERVAL_IN_MS + 500);
-
+  setInterval(() => {}, EMIT_INTERVAL_IN_MS + 500);
 
   socket.onAny(() => {
     packetsSinceLastReport++;
@@ -86,11 +92,11 @@ const printReport = () => {
 
 setInterval(printReport, 5000);
 
-// NOTES: Remove Auth middleware from Match Making Server. 
+// NOTES: Remove Auth middleware from Match Making Server.
 // Add the following:
 // (socket as any).userToken = { username: "duh" };
 // // @ts-ignore
 // (socket as any).userId = this.i++;
 
-// TODO: Try complex sequences 
+// TODO: Try complex sequences
 // TODO: Get auth (tokens) working

@@ -10,6 +10,7 @@ interface DiscoProps {
   session: Session | null;
   role: Role;
   lkToken: string;
+  matchData: MatchData;
   opponents: string[];
 }
 

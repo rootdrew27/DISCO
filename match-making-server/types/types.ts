@@ -1,3 +1,5 @@
+import { JWT } from "next-auth/jwt";
+
 export enum Role {
   VIEWER = "viewer",
   DISCUSSOR = "discussor",
@@ -70,7 +72,16 @@ export interface MatchData {
 
 export interface PendingMatch {
   match: MatchData;
-  acceptedBy: Set<string>;
-  rejectedBy: Set<string>;
-  timeout: NodeJS.Timeout;
+  acceptedBy: string[];
+  rejectedBy: string[];
+}
+
+export interface AuthJWT extends JWT {
+  username: string;
+}
+
+export interface UserData {
+  id: string;
+  token: AuthJWT;
+  isInPendingMatch: boolean;
 }

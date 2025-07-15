@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { LogLevel } from "./types/types.js"
+import { LogLevel } from "./types/types.js";
 
 export class Logger {
   private logDir: string;
