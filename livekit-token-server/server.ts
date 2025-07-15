@@ -1,6 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
 import { createServer } from "http";
-import { AccessToken, TrackSource, VideoGrant } from "livekit-server-sdk";
+import { AccessToken, TrackSource, VideoGrant, Room, RoomServiceClient, CreateOptions } from "livekit-server-sdk";
 import dotenv from "dotenv";
 import { Config, LogLevel, TokenRequest, TokenResponse } from "./types.js";
 import { Logger } from "./logger.js";
@@ -20,6 +20,7 @@ function loadConfig(): Config {
 
   return {
     port: parseInt(process.env.PORT!, 10),
+    liveKitUrl: process.env.LIVEKIT_API_URL!,
     liveKitApiKey: process.env.LIVEKIT_API_KEY!,
     liveKitApiSecret: process.env.LIVEKIT_API_SECRET!,
     clientUrl: process.env.NEXT_PUBLIC_CLIENT_URL!,
@@ -28,6 +29,17 @@ function loadConfig(): Config {
     logDir: process.env.LOG_DIR || "./logs",
   };
 }
+
+dotenv.config({ path: ".env.local" });
+
+const config = loadConfig();
+const logger = new Logger(config.logDir, config.logLevel);
+const errorHandler = new ErrorHandler(logger);
+const ROOM_SERVICE_CLIENT = new RoomServiceClient(
+  config.liveKitUrl,
+  config.liveKitApiKey,
+  config.liveKitApiSecret
+);
 
 function validateTokenRequest(
   matchId: unknown,
@@ -105,23 +117,19 @@ async function createDiscussionTokens(
     throw new TokenCreationError(`Token creation errors: ${errors.join(", ")}`);
   }
 
+  // create room
+  await ROOM_SERVICE_CLIENT.createRoom({ name: matchId, emptyTimeout: 60, departureTimeout: 60 })
+
   logger.info(
     `Successfully created ${Object.keys(tokens).length} tokens for match ${matchId}`
   );
   return tokens;
 }
 
-dotenv.config({ path: ".env.local" });
-
-const config = loadConfig();
-const logger = new Logger(config.logDir, config.logLevel);
-const errorHandler = new ErrorHandler(logger);
-
 const app = express();
 const server = createServer(app);
 
 app.use(express.json());
-
 function expressErrorHandler(
   error: Error,
   _req: Request,
@@ -143,6 +151,10 @@ function expressErrorHandler(
   errorHandler.handleGenericError(error, "express");
   res.status(500).json({ error: "Internal server error" });
 }
+app.use(expressErrorHandler);
+
+
+
 
 app.get("/tokens", async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -172,7 +184,7 @@ app.get("/tokens", async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-app.use(expressErrorHandler);
+
 
 server.listen(config.port, () => {
   logger.info(`LiveKit token server started on port ${config.port}`);

@@ -7,6 +7,7 @@ export enum LogLevel {
 
 export interface Config {
   port: number;
+  liveKitUrl: string;
   liveKitApiKey: string;
   liveKitApiSecret: string;
   clientUrl: string;
