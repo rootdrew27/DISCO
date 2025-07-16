@@ -1,7 +1,11 @@
 import { auth } from "@/auth";
 import { Disco } from "./_components/disco";
 import { Role } from "@/types/matches";
-import { getMatchData, getRole } from "@/lib/matches/active-matches";
+import {
+  getMatchData,
+  getRole,
+  isDuplicate,
+} from "@/lib/matches/active-matches";
 import { notFound } from "next/navigation";
 import { getToken } from "@/lib/disco/token";
 
@@ -27,6 +31,7 @@ export default async function DiscoPage({
     role = await getRole(roomName, session.username);
     if (!role) {
       notFound();
+    } else if (role === Role.DISCUSSOR) {
     }
   } else {
     role = Role.VIEWER;
@@ -34,6 +39,9 @@ export default async function DiscoPage({
 
   let { lkToken } = await searchParams;
   if (!lkToken || typeof lkToken !== "string") {
+    if (session && (await isDuplicate(roomName, session.username))) {
+      throw new Error("You are already in this match, likely in another tab.");
+    }
     lkToken = await getToken(matchData.id, role, session?.username); // NOTE: the invalidation caused by the fetch in this function only triggers a fast-refresh in development
   }
 

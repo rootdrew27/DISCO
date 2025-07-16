@@ -29,7 +29,7 @@ export async function getMatchData(matchId: string) {
 }
 
 export async function getRole(matchId: string, username: string) {
-  if (matchId && username) {
+  try {
     const matchDataJSON = await redisClient.hGet("activeMatches", matchId);
     if (!matchDataJSON) return null;
     if (
@@ -41,6 +41,20 @@ export async function getRole(matchId: string, username: string) {
     } else {
       return Role.VIEWER;
     }
+  } catch (error) {
+    console.log(error);
+    throw error;
   }
-  throw new Error("MatchId and username must be specified when getting role.");
+}
+
+export async function isDuplicate(matchId: string, username: string) {
+  try {
+    const result = await redisClient.hGet("activeMatches", matchId);
+    if (!result) return null;
+    const matchData = JSON.parse(result) as MatchData;
+    return matchData.participantUsernames.includes(username);
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
 }

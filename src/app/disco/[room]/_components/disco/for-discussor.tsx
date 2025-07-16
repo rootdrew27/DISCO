@@ -58,7 +58,7 @@ export function ForDiscussor(props: ForDiscussorProps) {
     });
 
   return (
-    <div className="relative bg-gray-900">
+    <div className="relative w-3/4 bg-gray-500 p-4">
       {/* Remote participant(s) - main view */}
       <div className="h-full w-full">
         {opponent ? (
@@ -73,7 +73,7 @@ export function ForDiscussor(props: ForDiscussorProps) {
       </div>
 
       {/* Local participant - picture-in-picture */}
-      <div className="absolute right-4 bottom-4 h-36 w-48 overflow-hidden rounded-lg border-2 border-gray-600 bg-gray-800 shadow-lg">
+      <div className="absolute right-4 bottom-4 h-24 w-42 overflow-hidden rounded-lg border-2 border-gray-600 bg-gray-800 shadow-lg">
         <video ref={localVideoRef} width="100%" />
       </div>
     </div>
