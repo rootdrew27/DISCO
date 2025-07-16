@@ -1,14 +1,27 @@
 # Tasks
 
-- [ ] Authentication
-    - [ ] Google
-        - [x] refresh token works 
-    - [ ] Twitter
-        - [x] refresh token works
-    - [x] basic tests
-    - [ ] rigorous tests
+## General
+- [ ] Logging in src/
 
-    - [ ] store refresh token (and expiration) in database.
-    - [ ] gracefully handle failed  
+## Authentication
+- [x] Google
+    - [x] refresh token works 
+- [x] Twitter
+    - [x] refresh token works
+- [x] basic tests
+- [ ] rigorous tests
 
-- [ ] Review Auth and make Documentation
+- [ ] store refresh token in database, to use as a backup.
+
+## Disco Room
+- General
+    - [ ] Chat
+- [ ] Debator Perspective
+    - [ ] Controls (Mic, Camera, etc)
+- [ ] Viewer Perspective
+
+- [ ] Staging Area
+
+## Match Making
+- [ ] User needs to be removed from queue if they let it expire
+- [ ] Preferences Modal (required if not set through profile page)

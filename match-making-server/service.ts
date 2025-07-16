@@ -372,17 +372,16 @@ export class MatchmakingService {
   private async finalizeMatch(pendingMatch: PendingMatch) {
     const matchId = pendingMatch.match.id;
     this.logger.info(`Finalizing match ${matchId}`);
-
-    await this.redisClient.del(`pendingMatch:${matchId}`);
-
+    await this.redisClient.hDel("pendingMatches", pendingMatch.match.id);
     try {
       const params = new URLSearchParams({
         matchId: pendingMatch.match.id,
         usernames: pendingMatch.match.participantUsernames.join(","),
       });
 
-      const liveKitUrl = this.config.liveKitTokenServerUrl;
-      const response = await fetch(`${liveKitUrl}/tokens?${params}`);
+      const response = await fetch(
+        `${this.config.liveKitTokenServerUrl}/tokens?${params}`
+      );
       if (!response.ok) {
         throw new Error(`Failed to get LiveKit tokens: ${response.status}`);
       }
@@ -405,7 +404,7 @@ export class MatchmakingService {
           });
         }
       }
-      this.redisClient.hSet(
+      await this.redisClient.hSet(
         "activeMatches",
         pendingMatch.match.id,
         JSON.stringify(pendingMatch.match)
@@ -418,14 +417,14 @@ export class MatchmakingService {
   }
 
   private async cancelMatch(matchId: string, reason: string) {
-    this.logger.info(`Cancelling match ${matchId}`, { reason });
-
-    const pendingMatchJSON = await this.redisClient.get(
-      `pendingMatch:${matchId}`
+    const pendingMatchJSON = await this.redisClient.hGet(
+      "pendingMatches",
+      matchId
     );
     if (!pendingMatchJSON) return;
 
-    this.redisClient.hDel("pendingMatches", matchId);
+    this.logger.info(`Cancelling match ${matchId}`, { reason });
+    await this.redisClient.hDel("pendingMatches", matchId);
 
     const pendingMatch: PendingMatch = JSON.parse(pendingMatchJSON);
 

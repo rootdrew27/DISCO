@@ -23,7 +23,6 @@ export async function getActiveMatches() {
 }
 
 export async function getMatchData(matchId: string) {
-  console.log(matchId);
   const matchDataJSON = await redisClient.hGet("activeMatches", matchId);
   if (!matchDataJSON) return null;
   return JSON.parse(matchDataJSON) as MatchData;

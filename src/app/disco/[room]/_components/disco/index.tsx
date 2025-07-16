@@ -2,22 +2,23 @@
 import { RoomContext } from "@livekit/components-react";
 import { Room } from "livekit-client";
 import { useEffect, useState } from "react";
-import { VideoPanels } from "../video-panels";
 import { Session } from "next-auth";
 import { Role } from "@/types/matches";
+import { ForDiscussor } from "./for-discussor";
+import { ForViewer } from "./for-viewer";
 
 interface DiscoProps {
   session: Session | null;
   role: Role;
   lkToken: string;
   matchData: MatchData;
-  opponents: string[];
 }
 
 export function Disco(props: DiscoProps) {
+  const lkToken = props.lkToken;
   const [room] = useState(() => new Room({}));
 
-  const lkToken = props.lkToken;
+  room.prepareConnection(process.env.NEXT_PUBLIC_LIVEKIT_API_URL!, lkToken);
 
   useEffect(() => {
     if (lkToken) {
@@ -29,9 +30,13 @@ export function Disco(props: DiscoProps) {
   }, [room, lkToken]);
 
   return (
-    <div className="h-screen w-full overflow-hidden">
+    <div className="h-full">
       <RoomContext.Provider value={room}>
-        <VideoPanels opponentIdentity={props.opponents.at(0)!} />
+        {props.role === Role.DISCUSSOR ? (
+          <ForDiscussor session={props.session} matchData={props.matchData} />
+        ) : (
+          <ForViewer matchData={props.matchData} />
+        )}
       </RoomContext.Provider>
     </div>
   );

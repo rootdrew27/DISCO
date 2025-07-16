@@ -3,6 +3,7 @@ import { Disco } from "./_components/disco";
 import { Role } from "@/types/matches";
 import { getMatchData, getRole } from "@/lib/matches/active-matches";
 import { notFound } from "next/navigation";
+import { getToken } from "@/lib/disco/token";
 
 export default async function DiscoPage({
   params,
@@ -12,20 +13,6 @@ export default async function DiscoPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { room: roomName } = await params;
-
-  let { lkToken, opponents } = await searchParams;
-  if (!lkToken || typeof lkToken !== "string") {
-    // TODO: get Token
-    lkToken = "";
-  }
-
-  if (!opponents) {
-    notFound();
-  }
-
-  if (typeof opponents === "string") {
-    opponents = [opponents];
-  }
 
   const matchData = await getMatchData(roomName);
 
@@ -45,13 +32,19 @@ export default async function DiscoPage({
     role = Role.VIEWER;
   }
 
+  let { lkToken } = await searchParams;
+  if (!lkToken || typeof lkToken !== "string") {
+    lkToken = await getToken(matchData.id, role, session?.username); // NOTE: the invalidation caused by the fetch in this function only triggers a fast-refresh in development
+  }
+
   return (
-    <Disco
-      session={session}
-      role={role}
-      lkToken={lkToken}
-      matchData={matchData}
-      opponents={opponents}
-    />
+    <div className="h-full">
+      <Disco
+        session={session}
+        role={role}
+        lkToken={lkToken}
+        matchData={matchData}
+      />
+    </div>
   );
 }

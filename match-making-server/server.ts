@@ -2,9 +2,8 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import dotenv from "dotenv";
-import { RoomServiceClient, WebhookReceiver } from "livekit-server-sdk";
-import cors from "cors";
-import { Role, Config, LogLevel } from "./types/types.js";
+import { WebhookReceiver } from "livekit-server-sdk";
+import { Config, LogLevel } from "./types/types.js";
 import { MatchmakingService } from "./service.js";
 import { createClient } from "redis";
 

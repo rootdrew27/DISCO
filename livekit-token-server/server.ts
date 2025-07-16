@@ -1,10 +1,24 @@
 import express, { Request, Response, NextFunction } from "express";
 import { createServer } from "http";
-import { AccessToken, TrackSource, VideoGrant, Room, RoomServiceClient, CreateOptions } from "livekit-server-sdk";
+import {
+  AccessToken,
+  TrackSource,
+  VideoGrant,
+  Room,
+  RoomServiceClient,
+  CreateOptions,
+} from "livekit-server-sdk";
 import dotenv from "dotenv";
-import { Config, LogLevel, TokenRequest, TokenResponse } from "./types.js";
+import {
+  Config,
+  LogLevel,
+  Role,
+  TokensRequest,
+  TokensResponse,
+} from "./types.js";
 import { Logger } from "./logger.js";
 import { ErrorHandler, TokenCreationError, ValidationError } from "./error.js";
+import { v4 as uuid } from "uuid";
 
 function loadConfig(): Config {
   const requiredEnvVars = ["LIVEKIT_API_KEY", "LIVEKIT_API_SECRET", "PORT"];
@@ -30,6 +44,28 @@ function loadConfig(): Config {
   };
 }
 
+function expressErrorHandler(
+  error: Error,
+  _req: Request,
+  res: Response,
+  _next: NextFunction
+): void {
+  if (error instanceof ValidationError) {
+    errorHandler.handleValidationError(error);
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  if (error instanceof TokenCreationError) {
+    errorHandler.handleTokenCreationError(error);
+    res.status(500).json({ error: error.message });
+    return;
+  }
+
+  errorHandler.handleGenericError(error, "express");
+  res.status(500).json({ error: "Internal server error" });
+}
+
 dotenv.config({ path: ".env.local" });
 
 const config = loadConfig();
@@ -41,10 +77,10 @@ const ROOM_SERVICE_CLIENT = new RoomServiceClient(
   config.liveKitApiSecret
 );
 
-function validateTokenRequest(
+function validateTokensRequest(
   matchId: unknown,
   usernames: unknown
-): TokenRequest {
+): TokensRequest {
   if (!matchId || typeof matchId !== "string") {
     throw new ValidationError("matchId must be a non-empty string");
   }
@@ -56,21 +92,70 @@ function validateTokenRequest(
   return { matchId, usernames };
 }
 
+function validateTokenRequest(
+  matchId: unknown,
+  role: unknown,
+  username: unknown
+) {
+  if (!(matchId && typeof matchId === "string") || !matchId.trim()) {
+    throw new ValidationError("matchId must be a non-empty string");
+  }
+  if (!(role === Role.DISCUSSOR || role === Role.VIEWER)) {
+    throw new ValidationError("role must be 'discussor' or 'viewer'");
+  }
+
+  if (!(username === undefined || typeof username === "string")) {
+    throw new ValidationError(
+      "if defined, username must be a non-empty string"
+    );
+  }
+  return { matchId, role, username };
+}
+
+async function createDiscussionToken(
+  matchId: string,
+  role: Role,
+  username?: string
+) {
+  const accessToken = new AccessToken(
+    config.liveKitApiKey,
+    config.liveKitApiSecret,
+    {
+      identity: !!username ? username : uuid(),
+      ttl: config.tokenTtl,
+    }
+  );
+
+  let videoGrant: VideoGrant;
+  if (role === Role.DISCUSSOR) {
+    videoGrant = {
+      room: matchId,
+      roomJoin: true,
+      canPublish: true,
+      canPublishSources: [TrackSource.CAMERA, TrackSource.MICROPHONE],
+      canSubscribe: true,
+      canPublishData: true,
+    };
+  } else {
+    videoGrant = {
+      room: matchId,
+      roomJoin: true,
+      canSubscribe: true,
+      canPublishData: true,
+    };
+  }
+
+  accessToken.addGrant(videoGrant);
+  return await accessToken.toJwt();
+}
+
 async function createDiscussionTokens(
   matchId: string,
   usernames: string[]
-): Promise<TokenResponse> {
-  if (!matchId.trim()) {
-    throw new ValidationError("matchId cannot be empty");
-  }
-
-  if (usernames.length === 0) {
-    throw new ValidationError("usernames array cannot be empty");
-  }
-
+): Promise<TokensResponse> {
   logger.info(`Creating tokens for match ${matchId}`, { usernames });
 
-  const tokens: TokenResponse = {};
+  const tokens: TokensResponse = {};
   const errors: string[] = [];
 
   await Promise.all(
@@ -81,8 +166,6 @@ async function createDiscussionTokens(
           errors.push(`Empty username provided`);
           return;
         }
-
-        console.log(config.liveKitApiSecret);
 
         const accessToken = new AccessToken(
           config.liveKitApiKey,
@@ -118,7 +201,11 @@ async function createDiscussionTokens(
   }
 
   // create room
-  await ROOM_SERVICE_CLIENT.createRoom({ name: matchId, emptyTimeout: 60, departureTimeout: 60 })
+  await ROOM_SERVICE_CLIENT.createRoom({
+    name: matchId,
+    emptyTimeout: 60,
+    departureTimeout: 60,
+  });
 
   logger.info(
     `Successfully created ${Object.keys(tokens).length} tokens for match ${matchId}`
@@ -130,37 +217,12 @@ const app = express();
 const server = createServer(app);
 
 app.use(express.json());
-function expressErrorHandler(
-  error: Error,
-  _req: Request,
-  res: Response,
-  _next: NextFunction
-): void {
-  if (error instanceof ValidationError) {
-    errorHandler.handleValidationError(error);
-    res.status(400).json({ error: error.message });
-    return;
-  }
-
-  if (error instanceof TokenCreationError) {
-    errorHandler.handleTokenCreationError(error);
-    res.status(500).json({ error: error.message });
-    return;
-  }
-
-  errorHandler.handleGenericError(error, "express");
-  res.status(500).json({ error: "Internal server error" });
-}
 app.use(expressErrorHandler);
 
-
-
-
 app.get("/tokens", async (req: Request, res: Response, next: NextFunction) => {
+  logger.info("Tokens request received", { query: req.query });
   try {
-    logger.info("Token request received", { query: req.query });
-
-    const { matchId, usernames } = validateTokenRequest(
+    const { matchId, usernames } = validateTokensRequest(
       req.query.matchId,
       req.query.usernames
     );
@@ -184,7 +246,20 @@ app.get("/tokens", async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-
+app.get("/token", async (req: Request, res: Response, next: NextFunction) => {
+  logger.info("Token request received", { query: req.query });
+  try {
+    const { matchId, role, username } = validateTokenRequest(
+      req.query.matchId,
+      req.query.role,
+      req.query.username
+    );
+    const token = await createDiscussionToken(matchId, role, username);
+    res.status(200).json({ token });
+  } catch (error) {
+    next(error);
+  }
+});
 
 server.listen(config.port, () => {
   logger.info(`LiveKit token server started on port ${config.port}`);

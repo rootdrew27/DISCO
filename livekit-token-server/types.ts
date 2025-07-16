@@ -16,11 +16,16 @@ export interface Config {
   logDir: string;
 }
 
-export interface TokenRequest {
+export interface TokensRequest {
   matchId: string;
   usernames: string;
 }
 
-export interface TokenResponse {
+export interface TokensResponse {
   [username: string]: string;
+}
+
+export enum Role {
+  VIEWER = "viewer",
+  DISCUSSOR = "discussor",
 }

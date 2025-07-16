@@ -135,6 +135,10 @@ Community-driven discussion format.
 - Screen sharing capabilities
 - Recording and clip generation
 
+#### Staging Area
+- Mandatory staging area of debators
+- For checking Video and Audio status
+
 #### Viewer Engagement
 
 **Chat System:**
