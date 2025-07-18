@@ -5,8 +5,7 @@ A live video discussion platform that facilitates both casual conversations and 
 ## Tech Stack
 
 - **Frontend**: Next.js 15 with React 19, TypeScript, Tailwind CSS 4
-- **Matchmaking Server**: Express.js with Socket.io, Redis for state management
-- **LiveKit Token Server**: Express.js with LiveKit Server SDK for livekit token generation
+- **Matchmaking Server**: Express.js with Socket.io
 - **Video Streaming**: LiveKit for real-time video/audio communication and (eventually) agents
 - **Authentication**: Auth.js (next-auth) with JWT strategy
 - **Database**: Redis for real-time data. MongoDB for user profiles. Plan to replace MongoDB with Postgres and DynamoDB
@@ -17,26 +16,14 @@ A live video discussion platform that facilitates both casual conversations and 
 A dedicated Express server handling user matchmaking with the following features:
 - **Socket.io Integration**: Real-time bidirectional communication
 - **Redis Queue Management**: Persistent user queues and match state
-- **Preference-based Matching**: Users matched by topic and discussion format (mock implementation)
+- **Preference-based Matching**: Users matched by topic and discussion format (mock implementation currently)
 - **Match Lifecycle**: Pending → Accepted/Rejected → Active/Cancelled workflow
-- **LiveKit Integration**: Automatic token generation upon match finalization (via request to livekit-token-server)
-- **Webhook Handling**: LiveKit room events for cleanup and state management
+- **LiveKit Integration**: Automatic livekit room creation upon match finalization
+- **Webhook Handling**: LiveKit event handlers for room cleanup
 
-Key components:
-- `MatchmakingService`: Core matching logic and socket event handling
-- Authentication middleware using next-auth JWT validation
-- Redis-based persistence for queue and match state
-
-### LiveKit Token Server (`livekit-token-server/`)
-A secure token generation service for LiveKit video sessions:
-- **JWT Token Generation**: Creates secure access tokens for video rooms
-- **Batch Token Creation**: Generates tokens for multiple participants simultaneously
-- **Room-based Permissions**: Configures publish/subscribe permissions per user
+## Misc
 
 Token features:
-- Camera and microphone publishing rights
-- Room join permissions with configurable TTL
-- Data publishing capabilities for chat/metadata
 - Username-based identity management
 
 ## Quick Start
@@ -83,11 +70,10 @@ npm run build && npm start
 
 ### Real-time Matchmaking Flow
 1. **User Queue Entry**: Users join queue with preferences (topic, format)
-2. **Compatibility Matching**: Algorithm pairs users with identical preferences (for now)
+2. **Compatibility Matching**: Algorithm pairs users with identical preferences (will enhance)
 3. **Pending Match Creation**: Both users receive match notification
-4. **Acceptance Phase**: Both users must accept within timeout period
-5. **Token Generation**: LiveKit tokens created for video room access
-6. **Match Finalization**: Users redirected to video discussion room
+4. **Acceptance Phase**: Both users must accept within timeout period (timeout removes user from queue)
+5. **Match Finalization**: Users redirected to staging room if they accept
 
 ### Redis Data Architecture
 - **`queue`**: Hash storing queued users with preferences and metadata
