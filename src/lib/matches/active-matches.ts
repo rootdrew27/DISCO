@@ -28,16 +28,10 @@ export async function getMatchData(matchId: string) {
   return JSON.parse(matchDataJSON) as MatchData;
 }
 
-export async function getRole(matchId: string, username: string) {
+export async function getRole(matchData: MatchData, username: string) {
   try {
-    const matchDataJSON = await redisClient.hGet("activeMatches", matchId);
-    if (!matchDataJSON) return null;
-    if (
-      (JSON.parse(matchDataJSON) as MatchData).participantUsernames.includes(
-        username
-      )
-    ) {
-      return Role.DISCUSSOR;
+    if (matchData.participantUsernames.includes(username)) {
+      return Role.DEBATER;
     } else {
       return Role.VIEWER;
     }

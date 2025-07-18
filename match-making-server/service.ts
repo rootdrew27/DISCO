@@ -13,17 +13,21 @@ import {
   UserData,
   AuthJWT,
 } from "./types/types.js";
+import { RoomServiceClient } from "livekit-server-sdk";
 
 interface UserSocket extends Socket {
   user?: UserData;
 }
 
+type UserSocketMap = Map<string, UserSocket>;
+
 export class MatchmakingService {
-  private userSockets: Map<string, UserSocket> = new Map();
+  private userSockets: UserSocketMap = new Map();
   private logger: Logger;
   private errorHandler: ErrorHandler;
   private config: Config;
   private redisClient: RedisClientType;
+  private roomServiceClient: RoomServiceClient;
 
   constructor(
     private io: Server,
@@ -36,6 +40,11 @@ export class MatchmakingService {
       url: "redis://localhost:6379",
     });
     this.redisClient.connect();
+    this.roomServiceClient = new RoomServiceClient(
+      config.liveKitUrl,
+      config.liveKitApiKey,
+      config.liveKitApiSecret
+    );
     this.setupSocketHandlers();
   }
   private setupSocketHandlers() {
@@ -163,7 +172,7 @@ export class MatchmakingService {
     await this.attemptMatching();
   }
 
-  private async handleLeaveQueue(socket: UserSocket) {
+  private async handleLeaveQueue(socket: UserSocket): Promise<void> {
     const userId = this.extractUserId(socket);
     this.logger.info(`User ${userId} leaving queue`);
 
@@ -308,8 +317,9 @@ export class MatchmakingService {
             participantUsernames: [users[i].username, users[j].username],
             topic: users[i].preferences.topic,
             format: users[i].preferences.format,
-            createdAt: new Date(),
-            expiresAt: new Date(Date.now() + this.config.matchExpireTime),
+            createdAt: Date.now(),
+            expiresAt: Date.now() + this.config.matchExpireTime,
+            startedAt: null,
           };
 
           matches.push(match);
@@ -372,45 +382,36 @@ export class MatchmakingService {
   private async finalizeMatch(pendingMatch: PendingMatch) {
     const matchId = pendingMatch.match.id;
     this.logger.info(`Finalizing match ${matchId}`);
-    await this.redisClient.hDel("pendingMatches", pendingMatch.match.id);
     try {
-      const params = new URLSearchParams({
-        matchId: pendingMatch.match.id,
-        usernames: pendingMatch.match.participantUsernames.join(","),
-      });
-
-      const response = await fetch(
-        `${this.config.liveKitTokenServerUrl}/tokens?${params}`
-      );
-      if (!response.ok) {
-        throw new Error(`Failed to get LiveKit tokens: ${response.status}`);
-      }
-      const livekitTokens = await response.json();
-
-      for (const userId of pendingMatch.match.participants) {
-        this.redisClient.hDel("queue", userId);
-        const socketId = this.userSockets.get(userId)?.id;
-        const userIndex = pendingMatch.match.participants.indexOf(userId);
-        const username = pendingMatch.match.participantUsernames[userIndex];
-        const opponents = pendingMatch.match.participantUsernames.filter(
-          (name) => username !== name
-        );
-
-        if (socketId) {
-          this.io.to(socketId).emit("match_ready", {
-            matchId: pendingMatch.match.id,
-            opponents: opponents,
-            lkToken: livekitTokens[username],
-          });
-        }
-      }
+      await this.redisClient.hDel("pendingMatches", pendingMatch.match.id);
+      pendingMatch.match.startedAt = Date.now();
       await this.redisClient.hSet(
         "activeMatches",
         pendingMatch.match.id,
         JSON.stringify(pendingMatch.match)
       );
+
+      for (const userId of pendingMatch.match.participants) {
+        this.redisClient.hDel("queue", userId);
+        const socketId = this.userSockets.get(userId)?.id;
+
+        if (socketId) {
+          this.io.to(socketId).emit("match_ready", {
+            matchId: pendingMatch.match.id,
+          });
+        }
+      }
+
+      // create room
+      await this.roomServiceClient.createRoom({
+        name: matchId,
+        emptyTimeout: 60 * 10,
+        departureTimeout: 60,
+      });
+
       this.logger.info(`Match ${pendingMatch.match.id} finalized successfully`);
     } catch (error) {
+      await this.redisClient.hDel("activeMatches", matchId);
       this.errorHandler.handleMatchError(error as Error, pendingMatch.match.id);
     }
     this.broadcastQueueUpdate();

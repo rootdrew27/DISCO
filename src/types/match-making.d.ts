@@ -21,6 +21,7 @@ interface MatchData {
   participantUsernames: string[];
   topic: string;
   format: string;
-  createdAt: Date;
-  expiresAt: Date;
+  createdAt: number; // ms
+  expiresAt: number; // ms
+  startedAt: number; // ms
 }

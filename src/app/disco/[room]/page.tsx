@@ -1,20 +1,14 @@
 import { auth } from "@/auth";
-import { Disco } from "./_components/disco";
+import { DiscoAsDebater } from "./_components/disco-as-debater";
 import { Role } from "@/types/matches";
-import {
-  getMatchData,
-  getRole,
-  isDuplicate,
-} from "@/lib/matches/active-matches";
+import { getMatchData, getRole } from "@/lib/matches/active-matches";
 import { notFound } from "next/navigation";
-import { getToken } from "@/lib/disco/token";
+import { DiscoAsViewer } from "./_components/disco-as-viewer";
 
 export default async function DiscoPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ room: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { room: roomName } = await params;
 
@@ -27,32 +21,31 @@ export default async function DiscoPage({
   const session = await auth();
 
   let role: Role | null;
+  // Get the users role (NOTE that this logic enables the session! prop below)
   if (session) {
-    role = await getRole(roomName, session.username);
+    role = await getRole(matchData, session.username);
     if (!role) {
       notFound();
-    } else if (role === Role.DISCUSSOR) {
     }
   } else {
     role = Role.VIEWER;
   }
 
-  let { lkToken } = await searchParams;
-  if (!lkToken || typeof lkToken !== "string") {
-    if (session && (await isDuplicate(roomName, session.username))) {
-      throw new Error("You are already in this match, likely in another tab.");
-    }
-    lkToken = await getToken(matchData.id, role, session?.username); // NOTE: the invalidation caused by the fetch in this function only triggers a fast-refresh in development
-  }
+  const isStaging =
+    15 - Math.floor((Date.now() - matchData.startedAt) / 1000) > 0;
 
   return (
     <div className="h-full">
-      <Disco
-        session={session}
-        role={role}
-        lkToken={lkToken}
-        matchData={matchData}
-      />
+      {role === Role.DEBATER ? (
+        <DiscoAsDebater
+          session={session!}
+          matchData={matchData}
+          role={role}
+          isStaging={isStaging}
+        />
+      ) : (
+        <DiscoAsViewer session={session} matchData={matchData} role={role} />
+      )}
     </div>
   );
 }

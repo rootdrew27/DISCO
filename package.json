@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --hostname localhost.com",
+    "dev": "next dev --hostname localhost.com -p 3000",
     "build": "next build",
     "start": "next start --hostname localhost.com",
     "lint": "next lint",
@@ -12,7 +12,9 @@
     "test:dev": "npm run dev & npx playwright test"
   },
   "dependencies": {
+    "@livekit/components-core": "^0.12.8",
     "@livekit/components-react": "^2.9.13",
+    "@livekit/components-styles": "^1.1.6",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-progress": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
@@ -28,6 +30,7 @@
     "next-auth": "^5.0.0-beta.29",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-icons": "^5.5.0",
     "redis": "^5.6.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",

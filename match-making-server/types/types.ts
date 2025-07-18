@@ -29,7 +29,9 @@ export interface Config {
   port: number;
   clientUrl: string;
   authSecret: string;
-  liveKitTokenServerUrl: string;
+  liveKitUrl: string;
+  liveKitApiKey: string;
+  liveKitApiSecret: string;
   matchExpireTime: number;
   logLevel: LogLevel;
   logDir: string;
@@ -66,8 +68,9 @@ export interface MatchData {
   participantUsernames: string[];
   topic: string;
   format: DiscussionFormat;
-  createdAt: Date;
-  expiresAt: Date;
+  createdAt: number; // ms
+  expiresAt: number; // ms
+  startedAt: number | null; // ms
 }
 
 export interface PendingMatch {

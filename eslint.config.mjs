@@ -11,16 +11,19 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-    ...compat.extends("next/core-web-vitals", "next/typescript"),
-    eslintConfigPrettier,
-    ...compat.config({
-      extends: ['next'],
-      settings: {
-        next: {
-          rootDir: 'src/',
-        }
-      }
-    })
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  eslintConfigPrettier,
+  ...compat.config({
+    extends: ["next"],
+    settings: {
+      next: {
+        rootDir: "src/",
+      },
+      rules: {
+        "@typescript-eslint/no-explicit-any": "error",
+      },
+    },
+  }),
 ];
 
 export default eslintConfig;

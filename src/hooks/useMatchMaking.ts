@@ -72,12 +72,8 @@ export function useMatchmaking(): UseMatchmakingReturn {
       console.log("Match Ready");
       setQueueStatus(QueueStatus.MATCH_READY);
 
-      const params = new URLSearchParams({
-        lkToken: data.lkToken,
-        opponents: data.opponents,
-      });
       // Navigate to LiveKit room
-      window.location.href = `/disco/${data.matchId}?${params}`;
+      window.location.href = `/disco/${data.matchId}`;
     });
 
     newSocket.on("match_cancelled", (reason) => {

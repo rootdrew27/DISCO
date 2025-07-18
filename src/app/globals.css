@@ -126,6 +126,12 @@ body,
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
+.flip-video {
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg); /* Safari and Chrome */
+  -moz-transform: rotateY(180deg); /* Firefox */
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

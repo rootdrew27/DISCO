@@ -1,6 +1,6 @@
 export enum Role {
   VIEWER = "viewer",
-  DISCUSSOR = "discussor",
+  DEBATER = "debater",
 }
 
 export enum QueueStatus {
@@ -26,4 +26,5 @@ export interface MatchData {
   format: DiscussionFormat;
   createdAt: Date;
   expiresAt: Date;
+  startedAt: number;
 }
