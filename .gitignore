@@ -49,3 +49,6 @@ node_modules/
 
 # logs
 **/logs
+
+# temp
+livekit-token-server/
